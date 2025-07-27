@@ -92,14 +92,18 @@ resource "aws_security_group" "main" {
   }
 }
 
+data "aws_ssm_parameter" "ubuntu_ami" {
+  name = "/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
+}
+
 # EC2 Instance
 resource "aws_instance" "likelion-terraform" {
-  ami                    = "ami-0e98e26aee1c6f590" # Ubuntu 22.04.5 LTS x86_64 in ap-northeast-2
+  ami                    = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type          = "t3.micro"              # Free-tier eligible small instance
   subnet_id              = aws_subnet.main.id
   key_name               = "likelion-terraform-key"         # 🔑 Replace with the name of your uploaded .pem key
   associate_public_ip_address = true               # Ensure instance gets a public IP
-  security_groups        = [aws_security_group.main.name]
+  vpc_security_group_ids = [aws_security_group.main.id]
 
   tags = {
     Name = "likelion-terraform-server"
