@@ -1,4 +1,4 @@
-# Dev Environment using Modular Terraform
+# Test Environment for All Modules
 terraform {
   required_version = ">= 1.0"
   required_providers {
@@ -18,9 +18,9 @@ provider "aws" {
 module "vpc" {
   source = "../../modules/vpc"
 
-  project_name      = "likelion-terraform-dev"
-  vpc_cidr         = "10.0.0.0/16"
-  subnet_cidr      = "10.0.1.0/24"
+  project_name      = "likelion-terraform-test-modules"
+  vpc_cidr         = "10.2.0.0/16"
+  subnet_cidr      = "10.2.1.0/24"
   availability_zone = "ap-northeast-2a"
 }
 
@@ -28,7 +28,7 @@ module "vpc" {
 module "ec2" {
   source = "../../modules/ec2"
 
-  project_name    = "likelion-terraform-dev"
+  project_name    = "likelion-terraform-test-modules"
   instance_type   = "t3.micro"
   key_name        = "likelion-terraform-key"
   vpc_id          = module.vpc.vpc_id
@@ -40,31 +40,21 @@ module "ec2" {
 module "eip" {
   source = "../../modules/eip"
 
-  project_name = "likelion-terraform-dev"
+  project_name = "likelion-terraform-test-modules"
   instance_id  = module.ec2.instance_id
 }
 
-# Outputs
-output "instance_id" {
-  value = module.ec2.instance_id
+# Test Outputs
+output "test_results" {
+  value = {
+    vpc_id       = module.vpc.vpc_id
+    subnet_id    = module.vpc.public_subnet_id
+    instance_id  = module.ec2.instance_id
+    public_ip    = module.eip.public_ip
+    ssh_command  = "ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@${module.eip.public_ip}"
+  }
 }
 
-output "public_ip" {
-  value = module.eip.public_ip
-}
-
-output "public_dns" {
-  value = module.eip.public_dns
-}
-
-output "vpc_id" {
-  value = module.vpc.vpc_id
-}
-
-output "subnet_id" {
-  value = module.vpc.public_subnet_id
-}
-
-output "ssh_command" {
-  value = "ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@${module.eip.public_ip}"
+output "test_message" {
+  value = "All modules test successful! Infrastructure ready."
 }
