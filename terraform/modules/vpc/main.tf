@@ -14,12 +14,24 @@ resource "aws_vpc" "main" {
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.subnet_cidr
-  availability_zone       = var.availability_zone
+  cidr_block              = var.public_subnet_cidr
+  availability_zone       = var.availability_zones[0]
   map_public_ip_on_launch = var.map_public_ip_on_launch
 
   tags = {
-    Name = "${var.project_name}-subnet"
+    Name = "${var.project_name}-public-subnet"
+  }
+}
+
+# Private Subnets for RDS
+resource "aws_subnet" "private" {
+  count             = length(var.private_subnet_cidrs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name = "${var.project_name}-private-subnet-${count.index + 1}"
   }
 }
 

@@ -1,0 +1,6 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and set your actual values
+# terraform.tfvars is gitignored for security
+
+# Database password for RDS MySQL instance
+db_password = "your-secure-password-here"
