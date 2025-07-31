@@ -1,0 +1,14 @@
+---
+# System Configuration Role - EC2 기본 설정
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: Configure swap memory
+  include_tasks: swap.yml
+
+- name: Set up SSH tunnel for RDS access
+  include_tasks: ssh_tunnel.yml

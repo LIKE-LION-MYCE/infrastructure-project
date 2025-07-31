@@ -1,0 +1,76 @@
+---
+# Create EC2 Folder Structure as specified
+
+- name: Create ubuntu home directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  loop:
+    - /home/ubuntu/apps
+    - /home/ubuntu/apps/backend
+    - /home/ubuntu/apps/frontend
+    - /home/ubuntu/apps/monitoring
+    - /home/ubuntu/logs
+    - /home/ubuntu/scripts
+    - /home/ubuntu/docker
+    - /home/ubuntu/config
+  become: yes
+
+- name: Create system directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { path: '/etc/nginx', owner: 'root', group: 'root' }
+    - { path: '/etc/letsencrypt', owner: 'root', group: 'root' }
+    - { path: '/var/lib/docker', owner: 'root', group: 'root' }
+    - { path: '/opt/monitoring', owner: 'ubuntu', group: 'ubuntu' }
+  become: yes
+
+- name: Create README files for directory purposes
+  copy:
+    dest: "{{ item.path }}/README.md"
+    content: "{{ item.content }}"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  loop:
+    - path: "/home/ubuntu/apps"
+      content: |
+        # Main applications folder
+        Contains backend, frontend, and monitoring applications
+    - path: "/home/ubuntu/apps/backend"
+      content: |
+        # Backend service: Docker scripts, config files, .env
+        Backend Docker execution scripts, configurations, and environment files
+    - path: "/home/ubuntu/apps/frontend"
+      content: |
+        # Frontend static build (e.g., React/Vite dist)
+        Frontend static build files from React/Vite builds
+    - path: "/home/ubuntu/apps/monitoring"
+      content: |
+        # Monitoring tools like Prometheus, Grafana, exporters
+        Monitoring stack: Prometheus, Grafana, and various exporters
+    - path: "/home/ubuntu/logs"
+      content: |
+        # (Optional) Centralized logs for backend/frontend/etc.
+        Centralized log storage for all applications
+    - path: "/home/ubuntu/scripts"
+      content: |
+        # Deployment scripts, health checks, and automation
+        Deployment and health-check scripts
+    - path: "/home/ubuntu/docker"
+      content: |
+        # Docker Compose files or templates (multi-service setup)
+        Docker Compose files and templates for multi-service setup
+    - path: "/home/ubuntu/config"
+      content: |
+        # Central config folder (can be real files or symlinks)
+        Centralized configuration files (actual files and symlinks)
+  become: yes

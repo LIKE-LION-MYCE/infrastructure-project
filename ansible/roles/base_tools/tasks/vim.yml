@@ -1,0 +1,47 @@
+---
+# Configure vim
+
+- name: Create vim configuration
+  copy:
+    dest: /home/ubuntu/.vimrc
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+    content: |
+      " Basic vim configuration
+      set number                    " Show line numbers
+      set relativenumber           " Show relative line numbers
+      set tabstop=4                " Tab width
+      set shiftwidth=4             " Indentation width
+      set expandtab                " Use spaces instead of tabs
+      set autoindent               " Auto indent
+      set smartindent              " Smart indent
+      set hlsearch                 " Highlight search results
+      set incsearch                " Incremental search
+      set ignorecase               " Case insensitive search
+      set smartcase                " Smart case search
+      set showcmd                  " Show command in status line
+      set showmatch                " Show matching brackets
+      set ruler                    " Show cursor position
+      set wildmenu                 " Enhanced command completion
+      set laststatus=2             " Always show status line
+      set encoding=utf-8           " UTF-8 encoding
+      set backspace=indent,eol,start " Make backspace work properly
+      set mouse=a                  " Enable mouse support
+      
+      " Color scheme
+      syntax on                    " Enable syntax highlighting
+      set background=dark          " Dark background
+      
+      " File type detection
+      filetype on
+      filetype plugin on
+      filetype indent on
+      
+      " Key mappings
+      nnoremap <C-n> :nohl<CR>     " Clear search highlighting
+      nnoremap <C-s> :w<CR>        " Save file
+      
+      " Status line
+      set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}]\ [TYPE=%Y]\ [POS=%l,%v][%p%%]\ %{strftime(\"%d/%m/%y\ -\ %H:%M\")}
+  become: yes

@@ -1,0 +1,33 @@
+---
+# Programming & Build Environment
+
+- name: Install Python3 and pip
+  apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+      - python3-dev
+    state: present
+  become: yes
+
+- name: Install Git
+  apt:
+    name: git
+    state: present
+  become: yes
+
+- name: Install Docker
+  include_tasks: docker.yml
+
+- name: Configure Git (if not already configured)
+  git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - { name: 'user.name', value: 'Ubuntu User' }
+    - { name: 'user.email', value: 'ubuntu@localhost' }
+    - { name: 'init.defaultBranch', value: 'main' }
+  become_user: ubuntu
+  ignore_errors: yes

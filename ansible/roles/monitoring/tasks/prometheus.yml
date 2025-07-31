@@ -1,0 +1,154 @@
+---
+# Install and configure Prometheus
+
+- name: Create prometheus user
+  user:
+    name: prometheus
+    system: yes
+    shell: /bin/false
+    home: /var/lib/prometheus
+    create_home: yes
+  become: yes
+
+- name: Create prometheus directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "/etc/prometheus", owner: "prometheus", group: "prometheus", mode: "0755" }
+    - { path: "/opt/monitoring/prometheus", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+    - { path: "/opt/monitoring/prometheus/data", owner: "prometheus", group: "prometheus", mode: "0755" }
+    - { path: "/home/ubuntu/apps/monitoring/prometheus", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+    - { path: "/home/ubuntu/config/prometheus", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+  become: yes
+
+- name: Download Prometheus
+  get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz"
+    dest: /tmp/prometheus.tar.gz
+    mode: '0644'
+  become: yes
+
+- name: Extract Prometheus
+  unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: /tmp
+    remote_src: yes
+  become: yes
+
+- name: Copy Prometheus binaries
+  copy:
+    src: "/tmp/prometheus-2.45.0.linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+    remote_src: yes
+  loop:
+    - prometheus
+    - promtool
+  become: yes
+
+- name: Copy Prometheus console files
+  copy:
+    src: "/tmp/prometheus-2.45.0.linux-amd64/{{ item }}"
+    dest: "/etc/prometheus/{{ item }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+    remote_src: yes
+  loop:
+    - consoles
+    - console_libraries
+  become: yes
+
+- name: Create Prometheus configuration in organized structure
+  copy:
+    dest: /home/ubuntu/config/prometheus/prometheus.yml
+    content: |
+      global:
+        scrape_interval: 15s
+        evaluation_interval: 15s
+
+      rule_files:
+        # - "/home/ubuntu/config/prometheus/rules/*.yml"
+
+      scrape_configs:
+        - job_name: 'prometheus'
+          static_configs:
+            - targets: ['localhost:9090']
+
+        - job_name: 'node'
+          static_configs:
+            - targets: ['localhost:9100']
+
+        - job_name: 'nginx'
+          static_configs:
+            - targets: ['localhost:80']
+          metrics_path: /metrics
+          scrape_interval: 30s
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  become: yes
+
+- name: Create symlink to system config location
+  file:
+    src: /home/ubuntu/config/prometheus/prometheus.yml
+    dest: /etc/prometheus/prometheus.yml
+    state: link
+    owner: prometheus
+    group: prometheus
+  become: yes
+  notify: restart prometheus
+
+- name: Create Prometheus systemd service
+  copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus
+      Wants=network-online.target
+      After=network-online.target
+
+      [Service]
+      User=prometheus
+      Group=prometheus
+      Type=simple
+      ExecStart=/usr/local/bin/prometheus \
+          --config.file /etc/prometheus/prometheus.yml \
+          --storage.tsdb.path /opt/monitoring/prometheus/data \
+          --web.console.templates=/etc/prometheus/consoles \
+          --web.console.libraries=/etc/prometheus/console_libraries \
+          --web.listen-address=0.0.0.0:9090 \
+          --web.enable-lifecycle
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: 
+    - reload systemd
+    - restart prometheus
+
+- name: Start and enable Prometheus
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: yes
+
+- name: Clean up Prometheus download files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/prometheus.tar.gz
+    - /tmp/prometheus-2.45.0.linux-amd64
+  become: yes

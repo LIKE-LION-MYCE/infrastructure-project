@@ -1,0 +1,33 @@
+---
+# Base System Tools (CLI, Shell, QoL)
+
+- name: Install base system packages
+  apt:
+    name:
+      - zsh
+      - curl
+      - wget
+      - git
+      - unzip
+      - neofetch
+      - bat
+      - btop
+      - rsync
+      - tmux
+      - vim
+      - build-essential
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Install fzf
+  include_tasks: fzf.yml
+
+- name: Configure zsh and oh-my-zsh
+  include_tasks: zsh.yml
+
+- name: Configure tmux
+  include_tasks: tmux.yml
+
+- name: Configure vim
+  include_tasks: vim.yml

@@ -1,0 +1,14 @@
+---
+# Deployment & Infrastructure
+
+- name: Install nginx
+  include_tasks: nginx.yml
+
+- name: Install certbot
+  include_tasks: certbot.yml
+
+- name: Configure fail2ban
+  include_tasks: fail2ban.yml
+
+- name: Configure logrotate
+  include_tasks: logrotate.yml

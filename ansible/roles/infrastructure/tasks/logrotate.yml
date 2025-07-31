@@ -1,0 +1,50 @@
+---
+# Configure logrotate for application logs
+
+- name: Install logrotate (usually pre-installed)
+  apt:
+    name: logrotate
+    state: present
+  become: yes
+
+- name: Create logrotate configuration for application logs
+  copy:
+    dest: /etc/logrotate.d/app-logs
+    content: |
+      /home/ubuntu/logs/*.log {
+          daily
+          missingok
+          rotate 30
+          compress
+          delaycompress
+          notifempty
+          create 644 ubuntu ubuntu
+          postrotate
+              # Restart services if needed
+              # systemctl reload nginx > /dev/null 2>&1 || true
+          endscript
+      }
+      
+      /home/ubuntu/apps/*/logs/*.log {
+          daily
+          missingok
+          rotate 30
+          compress
+          delaycompress
+          notifempty
+          create 644 ubuntu ubuntu
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Test logrotate configuration
+  command: logrotate -d /etc/logrotate.d/app-logs
+  become: yes
+  register: logrotate_test
+  failed_when: false
+
+- name: Display logrotate test results
+  debug:
+    var: logrotate_test.stdout_lines

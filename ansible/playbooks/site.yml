@@ -1,0 +1,85 @@
+---
+# Main playbook for EC2 server configuration
+
+- name: Configure EC2 servers
+  hosts: ec2_servers
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    # System configuration
+    swap_size: 2G
+    swap_swappiness: 10
+    
+    # Application directories
+    app_base_dir: /home/ubuntu/apps
+    logs_dir: /home/ubuntu/logs
+    scripts_dir: /home/ubuntu/scripts
+    config_dir: /home/ubuntu/config
+    docker_dir: /home/ubuntu/docker
+
+  roles:
+    - role: system_config
+      tags: ['system', 'swap', 'ssh']
+      
+    - role: folder_structure
+      tags: ['folders', 'structure']
+      
+    - role: base_tools
+      tags: ['tools', 'cli', 'shell']
+      
+    - role: programming_env
+      tags: ['programming', 'docker', 'python']
+      
+    - role: infrastructure
+      tags: ['infrastructure', 'nginx', 'ssl']
+      
+    - role: monitoring
+      tags: ['monitoring', 'prometheus', 'grafana']
+      when: enable_monitoring | default(false)
+
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+      become: yes
+      
+    - name: restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted
+      become: yes
+      
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+      become: yes
+      
+    - name: restart node_exporter
+      systemd:
+        name: node_exporter
+        state: restarted
+      become: yes
+      
+    - name: restart prometheus
+      systemd:
+        name: prometheus
+        state: restarted
+      become: yes
+      
+    - name: restart grafana
+      systemd:
+        name: grafana-server
+        state: restarted
+      become: yes
+
+  post_tasks:
+    - name: Display server information
+      debug:
+        msg:
+          - "Server configuration completed successfully!"
+          - "SSH: ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@{{ ansible_host }}"
+          - "Folders created under /home/ubuntu/: apps, logs, scripts, docker, config"
+          - "Services running: nginx, docker, fail2ban"
+          - "Tools installed: zsh, oh-my-zsh, fzf, tmux, vim, docker"

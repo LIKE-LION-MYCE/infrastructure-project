@@ -1,0 +1,31 @@
+---
+# Install and configure fzf
+
+- name: Clone fzf repository
+  git:
+    repo: https://github.com/junegunn/fzf.git
+    dest: /home/ubuntu/.fzf
+    version: master
+  become_user: ubuntu
+
+- name: Install fzf
+  shell: /home/ubuntu/.fzf/install --all --no-update-rc
+  become_user: ubuntu
+  args:
+    creates: /home/ubuntu/.fzf/bin/fzf
+
+- name: Add fzf to PATH in .zshrc
+  lineinfile:
+    path: /home/ubuntu/.zshrc
+    line: 'export PATH="$PATH:/home/ubuntu/.fzf/bin"'
+    state: present
+    create: yes
+  become_user: ubuntu
+
+- name: Source fzf key bindings in .zshrc
+  lineinfile:
+    path: /home/ubuntu/.zshrc
+    line: '[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh'
+    state: present
+    create: yes
+  become_user: ubuntu

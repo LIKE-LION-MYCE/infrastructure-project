@@ -1,0 +1,11 @@
+---
+# Monitoring setup: Prometheus + node_exporter + Grafana
+
+- name: Install node_exporter
+  include_tasks: node_exporter.yml
+
+- name: Install and configure Prometheus
+  include_tasks: prometheus.yml
+
+- name: Install and configure Grafana
+  include_tasks: grafana.yml

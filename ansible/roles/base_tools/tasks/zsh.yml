@@ -1,0 +1,38 @@
+---
+# Configure zsh and oh-my-zsh
+
+- name: Change ubuntu user shell to zsh
+  user:
+    name: ubuntu
+    shell: /bin/zsh
+  become: yes
+
+- name: Check if oh-my-zsh is already installed
+  stat:
+    path: /home/ubuntu/.oh-my-zsh
+  register: oh_my_zsh_stat
+  become_user: ubuntu
+
+- name: Install oh-my-zsh
+  shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  become_user: ubuntu
+  when: not oh_my_zsh_stat.stat.exists
+
+- name: Install zsh plugins
+  git:
+    repo: "{{ item.repo }}"
+    dest: "/home/ubuntu/.oh-my-zsh/custom/plugins/{{ item.name }}"
+    version: master
+  loop:
+    - { name: 'zsh-autosuggestions', repo: 'https://github.com/zsh-users/zsh-autosuggestions' }
+    - { name: 'zsh-syntax-highlighting', repo: 'https://github.com/zsh-users/zsh-syntax-highlighting.git' }
+  become_user: ubuntu
+
+- name: Configure .zshrc with custom settings
+  template:
+    src: zshrc.j2
+    dest: /home/ubuntu/.zshrc
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+  become: yes

@@ -1,0 +1,230 @@
+---
+# Install and configure Grafana
+
+- name: Install required packages for Grafana
+  apt:
+    name:
+      - apt-transport-https
+      - software-properties-common
+      - wget
+    state: present
+  become: yes
+
+- name: Add Grafana GPG key
+  apt_key:
+    url: https://apt.grafana.com/gpg.key
+    state: present
+  become: yes
+
+- name: Add Grafana repository
+  apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+    state: present
+  become: yes
+
+- name: Update apt cache after adding Grafana repo
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: Install Grafana
+  apt:
+    name: grafana
+    state: present
+  become: yes
+
+- name: Create Grafana directories (hybrid approach)
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    # System directories (required by Grafana service)
+    - { path: "/var/lib/grafana", owner: "grafana", group: "grafana", mode: "0755" }
+    - { path: "/var/log/grafana", owner: "grafana", group: "grafana", mode: "0755" }
+    # Organized structure directories  
+    - { path: "/opt/monitoring/grafana", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+    - { path: "/home/ubuntu/apps/monitoring/grafana", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+    - { path: "/home/ubuntu/apps/monitoring/grafana/dashboards", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+    - { path: "/home/ubuntu/config/grafana", owner: "ubuntu", group: "ubuntu", mode: "0755" }
+  become: yes
+
+- name: Create Grafana configuration in organized structure
+  copy:
+    dest: /home/ubuntu/config/grafana/grafana.ini
+    content: |
+      [DEFAULT]
+      instance_name = likelion-grafana
+
+      [server]
+      protocol = http
+      http_addr = 0.0.0.0
+      http_port = 3000
+      domain = {{ ec2_public_ip | default('localhost') }}
+      root_url = http://{{ ec2_public_ip | default('localhost') }}:3000/
+
+      [database]
+      type = sqlite3
+      path = /opt/monitoring/grafana/grafana.db
+
+      [security]
+      admin_user = admin
+      admin_password = grafana123
+      secret_key = SW2YcwTIb9zpOOhoPsMm
+      disable_gravatar = true
+
+      [users]
+      allow_sign_up = false
+      allow_org_create = false
+
+      [auth.anonymous]
+      enabled = false
+
+      [dashboards]
+      default_home_dashboard_path = /home/ubuntu/apps/monitoring/grafana/dashboards/node-exporter.json
+
+      [log]
+      mode = console file
+      level = info
+      file = /home/ubuntu/logs/grafana.log
+    owner: ubuntu
+    group: ubuntu
+    mode: '640'
+  become: yes
+
+- name: Create symlink to system config location
+  file:
+    src: /home/ubuntu/config/grafana/grafana.ini
+    dest: /etc/grafana/grafana.ini
+    state: link
+    force: yes
+  become: yes
+  notify: restart grafana
+
+- name: Create Grafana datasource configuration
+  copy:
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    content: |
+      apiVersion: 1
+
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://localhost:9090
+          isDefault: true
+          editable: true
+    owner: root
+    group: grafana
+    mode: '644'
+  become: yes
+  notify: restart grafana
+
+- name: Create basic Node Exporter dashboard in organized structure
+  copy:
+    dest: /home/ubuntu/apps/monitoring/grafana/dashboards/node-exporter.json
+    content: |
+      {
+        "dashboard": {
+          "id": null,
+          "title": "Node Exporter Full",
+          "tags": ["node-exporter"],
+          "timezone": "browser",
+          "panels": [
+            {
+              "id": 1,
+              "title": "CPU Usage",
+              "type": "stat",
+              "targets": [
+                {
+                  "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+                  "legendFormat": "CPU Usage %"
+                }
+              ],
+              "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+            },
+            {
+              "id": 2,
+              "title": "Memory Usage",
+              "type": "stat",
+              "targets": [
+                {
+                  "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+                  "legendFormat": "Memory Usage %"
+                }
+              ],
+              "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+            },
+            {
+              "id": 3,
+              "title": "Disk Usage",
+              "type": "stat",
+              "targets": [
+                {
+                  "expr": "(1 - (node_filesystem_avail_bytes{fstype!=\"tmpfs\"} / node_filesystem_size_bytes{fstype!=\"tmpfs\"})) * 100",
+                  "legendFormat": "Disk Usage %"
+                }
+              ],
+              "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+            },
+            {
+              "id": 4,
+              "title": "Network Traffic",
+              "type": "graph",
+              "targets": [
+                {
+                  "expr": "rate(node_network_receive_bytes_total[5m])",
+                  "legendFormat": "Received"
+                },
+                {
+                  "expr": "rate(node_network_transmit_bytes_total[5m])",
+                  "legendFormat": "Transmitted"
+                }
+              ],
+              "gridPos": {"h": 6, "w": 12, "x": 0, "y": 4}
+            }
+          ],
+          "time": {"from": "now-1h", "to": "now"},
+          "refresh": "30s"
+        }
+      }
+    owner: grafana
+    group: grafana
+    mode: '644'
+  become: yes
+
+- name: Create Grafana dashboard provisioning config
+  copy:
+    dest: /etc/grafana/provisioning/dashboards/default.yml
+    content: |
+      apiVersion: 1
+
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          updateIntervalSeconds: 10
+          allowUiUpdates: true
+          options:
+            path: /home/ubuntu/apps/monitoring/grafana/dashboards
+    owner: root
+    group: grafana
+    mode: '644'
+  become: yes
+
+- name: Start and enable Grafana
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: yes
+  notify: restart grafana
+
+- name: Add Grafana handler to main playbook handlers
+  debug:
+    msg: "Grafana will be available at http://{{ ec2_public_ip | default('your-server-ip') }}:3000 (admin/grafana123)"

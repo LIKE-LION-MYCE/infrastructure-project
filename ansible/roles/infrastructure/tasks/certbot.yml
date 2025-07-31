@@ -1,0 +1,41 @@
+---
+# Install and configure certbot
+
+- name: Install certbot and nginx plugin
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+  become: yes
+
+- name: Ensure letsencrypt directory exists
+  file:
+    path: /etc/letsencrypt
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- name: Create certbot renewal script
+  copy:
+    dest: /home/ubuntu/scripts/renew-ssl.sh
+    content: |
+      #!/bin/bash
+      # SSL certificate renewal script
+      /usr/bin/certbot renew --quiet
+      systemctl reload nginx
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  become: yes
+
+- name: Add certbot renewal to crontab
+  cron:
+    name: "Renew SSL certificates"
+    minute: "0"
+    hour: "12"
+    job: "/home/ubuntu/scripts/renew-ssl.sh"
+    user: root
+  become: yes

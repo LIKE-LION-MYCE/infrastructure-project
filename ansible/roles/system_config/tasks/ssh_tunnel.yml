@@ -1,0 +1,54 @@
+---
+# SSH tunnel 설정 for RDS access
+
+- name: Create SSH tunnel user for database access
+  user:
+    name: dbtunnel
+    system: yes
+    shell: /bin/bash
+    home: /home/dbtunnel
+    create_home: yes
+  become: yes
+
+- name: Create .ssh directory for tunnel user
+  file:
+    path: /home/dbtunnel/.ssh
+    state: directory
+    owner: dbtunnel
+    group: dbtunnel
+    mode: '0700'
+  become: yes
+
+- name: Generate SSH key for database tunnel (restricted)
+  openssh_keypair:
+    path: /home/dbtunnel/.ssh/db_tunnel_key
+    type: rsa
+    size: 2048
+    owner: dbtunnel
+    group: dbtunnel
+    mode: '0600'
+  become: yes
+
+- name: Create restricted SSH authorized_keys for team members
+  template:
+    src: authorized_keys_tunnel.j2
+    dest: /home/dbtunnel/.ssh/authorized_keys
+    owner: dbtunnel
+    group: dbtunnel
+    mode: '0600'
+  become: yes
+
+- name: Create SSH tunnel script for RDS access
+  template:
+    src: create_tunnel.sh.j2
+    dest: /home/ubuntu/scripts/create_tunnel.sh
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+  become: yes
+
+- name: Install MySQL client for testing
+  apt:
+    name: mysql-client-core-8.0
+    state: present
+  become: yes

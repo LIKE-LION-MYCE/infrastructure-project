@@ -1,0 +1,44 @@
+---
+# Install and configure fail2ban for SSH protection
+
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+  become: yes
+
+- name: Create fail2ban local configuration
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+      # Ban time: 1 hour
+      bantime = 3600
+      
+      # Find time: 10 minutes
+      findtime = 600
+      
+      # Max retry: 5 attempts
+      maxretry = 5
+      
+      # Ignore local IPs
+      ignoreip = 127.0.0.1/8 ::1
+      
+      [sshd]
+      enabled = true
+      port = ssh
+      filter = sshd
+      logpath = /var/log/auth.log
+      maxretry = 3
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: restart fail2ban
+
+- name: Start and enable fail2ban
+  systemd:
+    name: fail2ban
+    state: started
+    enabled: yes
+  become: yes
