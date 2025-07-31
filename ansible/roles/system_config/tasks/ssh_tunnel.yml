@@ -5,7 +5,7 @@
   user:
     name: dbtunnel
     system: yes
-    shell: /bin/bash
+    shell: /bin/false
     home: /home/dbtunnel
     create_home: yes
   become: yes
@@ -33,6 +33,21 @@
   template:
     src: authorized_keys_tunnel.j2
     dest: /home/dbtunnel/.ssh/authorized_keys
+    owner: dbtunnel
+    group: dbtunnel
+    mode: '0600'
+  become: yes
+
+- name: Read generated public key
+  slurp:
+    src: /home/dbtunnel/.ssh/db_tunnel_key.pub
+  register: dbtunnel_pubkey
+  become: yes
+
+- name: Add generated public key to authorized_keys with restrictions
+  lineinfile:
+    path: /home/dbtunnel/.ssh/authorized_keys
+    line: 'command="echo ''DB tunnel only''",no-agent-forwarding,no-X11-forwarding,no-pty {{ dbtunnel_pubkey.content | b64decode | trim }} dbtunnel@generated'
     owner: dbtunnel
     group: dbtunnel
     mode: '0600'

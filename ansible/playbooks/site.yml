@@ -90,5 +90,5 @@
           - "Database: {{ rds_database }}"
           - "Folders created under /home/ubuntu/: apps, logs, scripts, docker, config"
           - "Services running: nginx, docker, fail2ban"
-          - "Tools installed: zsh, oh-my-zsh, fzf, tmux, vim, docker"
+          - "Tools installed: zsh, oh-my-zsh, fzf, tmux, vim, docker, mysql-client"
           - "SSH tunnel script: /home/ubuntu/scripts/create_tunnel.sh"

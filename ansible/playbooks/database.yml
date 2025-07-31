@@ -1,0 +1,39 @@
+---
+# Database Setup Playbook
+# Run this separately to manage database users
+
+- name: Setup MySQL Database Users
+  hosts: ec2_servers
+  gather_facts: no
+  
+  vars:
+    # Load RDS configuration
+    rds_endpoint: "{{ hostvars[groups['ec2_servers'][0]]['rds_endpoint'] | default('likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com') }}"
+    rds_port: "{{ hostvars[groups['ec2_servers'][0]]['rds_port'] | default(3306) }}"
+    rds_database: "{{ hostvars[groups['ec2_servers'][0]]['rds_database'] | default('myce_database') }}"  
+    rds_username: "{{ hostvars[groups['ec2_servers'][0]]['rds_username'] | default('admin') }}"
+    rds_password: "{{ hostvars[groups['ec2_servers'][0]]['rds_password'] | default('myceforever') }}"
+
+  pre_tasks:
+    - name: Load group variables
+      include_vars: ../group_vars/all.yml
+
+    - name: Test direct RDS connection from EC2
+      command: mysql -h {{ rds_endpoint }} -u {{ rds_username }} --password={{ rds_password }} -e "SELECT 1;"
+      register: mysql_test
+      failed_when: mysql_test.rc != 0
+      no_log: true
+
+  roles:
+    - role: database
+      tags: ['database', 'users']
+
+  post_tasks:
+    - name: Database setup complete
+      debug:
+        msg:
+          - "✅ Database user setup completed!"
+          - "🔗 Users can now connect using SSH tunnel:"
+          - "   1. Start tunnel: ssh -N -L 3307:{{ rds_endpoint }}:3306 dbtunnel@{{ ec2_public_ip }} -i dbtunnel_private_key"
+          - "   2. Connect: mysql -h localhost -P 3307 -u [username] -p {{ rds_database }}"
+          - "📝 Remember to update passwords for production use!"

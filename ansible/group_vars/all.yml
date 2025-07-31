@@ -1,4 +1,4 @@
-# Auto-generated from Terraform outputs - Thu Jul 31 17:55:31 KST 2025
+# Auto-generated from Terraform outputs - Thu Jul 31 22:47:12 KST 2025
 ---
 # EC2 Configuration
 ec2_public_ip: "43.203.98.133"

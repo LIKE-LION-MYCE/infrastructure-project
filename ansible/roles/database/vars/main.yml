@@ -1,0 +1,38 @@
+---
+# Database Users Configuration
+# IMPORTANT: Change these passwords in production!
+database_users:
+  - name: "myce_choi"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_gu"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_g1"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_lee"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_kim"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_in"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_hwang"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_juan"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+  - name: "myce_prod"
+    password: "myceforever"
+    privileges: "myce_database.*:ALL"
+
+# MySQL connection settings (direct to RDS from EC2)
+mysql_host: "{{ rds_endpoint }}"
+mysql_port: "{{ rds_port }}"
+mysql_login_user: "{{ rds_username }}"
+mysql_login_password: "{{ rds_password }}"
+mysql_login_database: "{{ rds_database }}"

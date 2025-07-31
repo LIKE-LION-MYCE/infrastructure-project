@@ -167,35 +167,97 @@ infrastructure-project/
 └── /opt/monitoring/        # 데이터 저장소
 ```
 
-## 🗄️ 데이터베이스 접근
+## 🗄️ 데이터베이스 관리
+
+### 🚀 빠른 데이터베이스 설정
+
+```bash
+# 한 번에 터널 생성 + 사용자 설정
+./setup_database.sh
+
+# 커스텀 비밀번호로 설정
+MYCE_PASSWORD=secure123 JOBDAM_PASSWORD=secure456 ./setup_database.sh
+
+# 터널만 관리
+./setup_database.sh tunnel-start
+./setup_database.sh tunnel-stop
+./setup_database.sh tunnel-status
+```
 
 ### 연결 정보
 
 - **호스트**: RDS 엔드포인트 (private 서브넷)
 - **데이터베이스**: `myce_database`
-- **사용자명**: `admin`
-- **비밀번호**: `terraform.tfvars`에서 설정
+- **관리자**: `admin` / `myceforever`
+- **터널 포트**: `3307` (로컬)
+
+### 자동 생성되는 사용자
+
+**MYCE 팀:**
+- `myce_choi`, `myce_gu`, `myce_g1`, `myce_lee`
+- `myce_kim`, `myce_in`, `myce_hwang`
+
+**Jobdam 팀:**
+- `jobdam_juan`, `jobdam_prod`
+
+모든 사용자는 `myce_database.*`에 대한 전체 권한을 가집니다.
 
 ### SSH 터널을 통한 안전한 접근
 
+**자동화된 방법 (권장):**
 ```bash
-# 터널 생성 (자동화된 스크립트)
-/home/ubuntu/scripts/create_tunnel.sh
+./setup_database.sh tunnel-start  # 터널 시작
+mysql -h localhost -P 3307 -u myce_choi -p myce_database
+```
 
-# 수동 터널
-ssh -L 3307:rds-endpoint:3306 ubuntu@server-ip -i ~/.ssh/aws/likelion-terraform-key
+**수동 터널:**
+```bash
+# 1. SSH 키 복사 (최초 1회)
+scp -i ~/.ssh/aws/likelion-terraform-key ubuntu@43.203.98.133:/home/dbtunnel/.ssh/db_tunnel_key ./dbtunnel_private_key
+chmod 600 ./dbtunnel_private_key
 
-# 데이터베이스 연결
+# 2. 터널 생성
+ssh -N -L 3307:likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com:3306 dbtunnel@43.203.98.133 -i dbtunnel_private_key
+
+# 3. 데이터베이스 연결
 mysql -h localhost -P 3307 -u admin -p myce_database
 ```
 
-### 팀 접근
+### 팀 접근 관리
 
-팀 멤버는 데이터베이스 터널링 전용 제한된 SSH 키 받기:
+데이터베이스 전용 SSH 터널링:
 
 - **터널 사용자**: `dbtunnel`
-- **키 위치**: `/home/dbtunnel/.ssh/db_tunnel_key`
+- **키 위치**: `/home/dbtunnel/.ssh/db_tunnel_key` (EC2에서)
 - **제한사항**: 포트 포워딩만 가능, 셸 접근 불가
+- **로컬 키**: `./dbtunnel_private_key` (로컬 복사본)
+
+### 데이터베이스 스크립트 명령어
+
+```bash
+# 전체 설정 (터널 + 사용자 생성)
+./setup_database.sh
+
+# 커스텀 비밀번호로 설정
+MYCE_PASSWORD=YourPassword123 ./setup_database.sh
+
+# 터널 관리만
+./setup_database.sh tunnel-start    # 터널 시작
+./setup_database.sh tunnel-stop     # 터널 중지
+./setup_database.sh tunnel-status   # 터널 상태 확인
+
+# 도움말
+./setup_database.sh help
+```
+
+### 🔧 Manual Database Setup
+
+Ansible playbook 직접 실행:
+
+```bash
+cd ansible
+ansible-playbook -i inventory/hosts playbooks/database.yml
+```
 
 ## 🔧 설정 파일
 

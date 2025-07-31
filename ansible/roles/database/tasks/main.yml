@@ -1,0 +1,33 @@
+---
+# Database User Management (runs on EC2, connects directly to RDS)
+
+- name: Install PyMySQL for Ansible MySQL modules
+  pip:
+    name: PyMySQL
+    state: present
+  become: yes
+
+- name: Create MySQL users using direct commands
+  command: |
+    mysql -h {{ mysql_host }} -u {{ mysql_login_user }} --password={{ mysql_login_password }} -e "
+    CREATE USER IF NOT EXISTS '{{ item.name }}'@'%' IDENTIFIED BY '{{ item.password }}';
+    GRANT ALL PRIVILEGES ON {{ mysql_login_database }}.* TO '{{ item.name }}'@'%';
+    "
+  loop: "{{ database_users }}"
+  no_log: true
+
+- name: Flush MySQL privileges
+  command: |
+    mysql -h {{ mysql_host }} -u {{ mysql_login_user }} --password={{ mysql_login_password }} -e "FLUSH PRIVILEGES;"
+  no_log: true
+
+- name: Display created users
+  debug:
+    msg:
+      - "✅ Created MySQL users:"
+      - "{{ database_users | map(attribute='name') | list | join(', ') }}"
+      - "📋 Connection details:"
+      - "  Host: {{ mysql_host }}"
+      - "  Port: {{ mysql_port }}"
+      - "  Database: {{ mysql_login_database }}"
+      - "📝 Connect via SSH tunnel: mysql -h localhost -P 3307 -u [username] -p {{ mysql_login_database }}"
