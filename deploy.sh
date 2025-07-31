@@ -118,6 +118,10 @@ if [ "$SKIP_TERRAFORM" = false ]; then
     
     cd "$TERRAFORM_DIR"
     
+    echo "🔧 Initializing Terraform (downloading modules and providers)..."
+    terraform init
+    print_status "Terraform initialized successfully"
+    
     echo "🔍 Checking Terraform configuration..."
     terraform validate
     print_status "Terraform configuration is valid"

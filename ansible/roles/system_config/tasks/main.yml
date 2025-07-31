@@ -7,8 +7,25 @@
     cache_valid_time: 3600
   become: yes
 
+- name: Set timezone to Asia/Seoul
+  timezone:
+    name: Asia/Seoul
+  become: yes
+
+- name: Set friendly hostname
+  hostname:
+    name: likelion-dev-server
+  become: yes
+
+- name: Update /etc/hosts with new hostname
+  lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1.*localhost'
+    line: '127.0.0.1 localhost likelion-dev-server'
+    backup: yes
+  become: yes
+
 - name: Configure swap memory
   include_tasks: swap.yml
 
-- name: Set up SSH tunnel for RDS access
-  include_tasks: ssh_tunnel.yml
+# SSH tunnel setup moved to post_tasks in main playbook to ensure variables are loaded

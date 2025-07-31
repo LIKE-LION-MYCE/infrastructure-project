@@ -1,0 +1,8 @@
+# SSH keys for database tunnel access
+# Restricted to only allow port forwarding, no shell access
+
+# Add team member SSH public keys here with tunnel restrictions
+# Format: command="echo 'Tunnel only'",no-agent-forwarding,no-X11-forwarding,no-pty ssh-rsa AAAAB3... user@host
+
+# Example (replace with actual team member keys):
+# command="echo 'DB tunnel only'",no-agent-forwarding,no-X11-forwarding,no-pty ssh-rsa AAAAB3NzaC1yc2EAAAA... team-member@company.com

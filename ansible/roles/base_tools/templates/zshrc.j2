@@ -28,6 +28,7 @@ alias ...='cd ../..'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
+alias bat='batcat'
 
 # Docker aliases
 alias dc='docker-compose'
@@ -41,6 +42,11 @@ neofetch() {
         command neofetch
     fi
 }
+
+# FZF configuration with preview
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
+export FZF_CTRL_T_OPTS="--preview 'batcat --style=numbers --color=always --line-range :500 {}' --preview-window=right:50%"
+export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window=down:3:hidden:wrap --bind '?:toggle-preview'"
 
 # FZF key bindings and auto-completion
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

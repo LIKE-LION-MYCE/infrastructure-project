@@ -34,7 +34,7 @@ $EC2_IP" inventory/hosts
 ec2_public_ip: "$EC2_IP"
 
 # RDS Configuration  
-rds_endpoint: "$DB_ENDPOINT"
+rds_endpoint: "${DB_ENDPOINT%:*}"
 rds_port: 3306
 rds_database: "$DB_NAME"
 rds_username: "admin"
@@ -74,10 +74,11 @@ if [ $? -eq 0 ]; then
     echo "   Port: 3307"
     echo "   Database: {{ rds_database }}"
     echo "   Username: {{ rds_username }}"
-    echo "   Password: {{ rds_password }}"
+    echo "   Password: [Ask team lead for credentials]"
     echo ""
     echo "🔌 MySQL Command:"
-    echo "   mysql -h localhost -P 3307 -u {{ rds_username }} -p{{ rds_password }} {{ rds_database }}"
+    echo "   mysql -h localhost -P 3307 -u {{ rds_username }} -p {{ rds_database }}"
+    echo "   # You will be prompted for password"
     echo ""
     echo "🛑 To close tunnel: pkill -f 'ssh.*3307:{{ rds_endpoint }}'"
 else
@@ -106,7 +107,7 @@ EOF
 - **RDS Endpoint:** \`$DB_ENDPOINT\`  
 - **Database:** \`$DB_NAME\`
 - **Username:** \`admin\`
-- **Password:** \`myceforever\`
+- **Password:** \`[See terraform.tfvars or ask team lead]\`
 - **Port:** \`3306\`
 
 ## 🔒 Secure Connection via SSH Tunnel
@@ -122,7 +123,8 @@ ssh -L 3307:$DB_ENDPOINT:3306 ubuntu@$EC2_IP -i ~/.ssh/aws/likelion-terraform-ke
 
 ### 2. Connect to Database
 \`\`\`bash
-mysql -h localhost -P 3307 -u admin -pmyceforever $DB_NAME
+mysql -h localhost -P 3307 -u admin -p $DB_NAME
+# You will be prompted for password - ask team lead for credentials
 \`\`\`
 
 ### 3. Close Tunnel
@@ -141,7 +143,8 @@ FLUSH PRIVILEGES;
 
 ### Connection String for Applications
 \`\`\`
-mysql://admin:myceforever@$DB_ENDPOINT:3306/$DB_NAME
+mysql://admin:[PASSWORD]@$DB_ENDPOINT:3306/$DB_NAME
+# Replace [PASSWORD] with actual credentials from secure storage
 \`\`\`
 
 ---

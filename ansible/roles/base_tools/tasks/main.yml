@@ -1,6 +1,13 @@
 ---
 # Base System Tools (CLI, Shell, QoL)
 
+- name: Update apt cache and upgrade packages
+  apt:
+    update_cache: yes
+    upgrade: dist
+    cache_valid_time: 3600
+  become: yes
+
 - name: Install base system packages
   apt:
     name:
@@ -15,10 +22,12 @@
       - rsync
       - tmux
       - vim
+      - tree
       - build-essential
     state: present
     update_cache: yes
   become: yes
+
 
 - name: Install fzf
   include_tasks: fzf.yml

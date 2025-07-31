@@ -1,0 +1,33 @@
+#!/bin/bash
+# SSH Tunnel Script for RDS Access
+# Auto-generated from Terraform outputs
+
+echo "🔒 Creating SSH tunnel to RDS database..."
+echo "📍 RDS Endpoint: {{ rds_endpoint }}"
+echo "🏠 Local Port: 3307 (to avoid conflicts with local MySQL)"
+
+# Create SSH tunnel (run in background)
+ssh -f -N -L 3307:{{ rds_endpoint }}:{{ rds_port }} ubuntu@{{ ec2_public_ip }} \
+    -i ~/.ssh/aws/likelion-terraform-key \
+    -o ServerAliveInterval=60 \
+    -o ServerAliveCountMax=3
+
+if [ $? -eq 0 ]; then
+    echo "✅ SSH tunnel created successfully!"
+    echo ""
+    echo "📋 Connection Details:"
+    echo "   Host: localhost"
+    echo "   Port: 3307"
+    echo "   Database: {{ rds_database }}"
+    echo "   Username: {{ rds_username }}"
+    echo "   Password: [Ask team lead for credentials]"
+    echo ""
+    echo "🔌 MySQL Command:"
+    echo "   mysql -h localhost -P 3307 -u {{ rds_username }} -p {{ rds_database }}"
+    echo "   # You will be prompted for password"
+    echo ""
+    echo "🛑 To close tunnel: pkill -f 'ssh.*3307:{{ rds_endpoint }}'"
+else
+    echo "❌ Failed to create SSH tunnel"
+    exit 1
+fi

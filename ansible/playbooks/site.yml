@@ -75,11 +75,20 @@
       become: yes
 
   post_tasks:
+    - name: Load RDS variables from group_vars
+      include_vars: group_vars/all.yml
+
+    - name: Set up SSH tunnel for RDS access
+      include_tasks: roles/system_config/tasks/ssh_tunnel.yml
+
     - name: Display server information
       debug:
         msg:
           - "Server configuration completed successfully!"
           - "SSH: ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@{{ ansible_host }}"
+          - "RDS: {{ rds_endpoint }}:{{ rds_port }}"
+          - "Database: {{ rds_database }}"
           - "Folders created under /home/ubuntu/: apps, logs, scripts, docker, config"
           - "Services running: nginx, docker, fail2ban"
           - "Tools installed: zsh, oh-my-zsh, fzf, tmux, vim, docker"
+          - "SSH tunnel script: /home/ubuntu/scripts/create_tunnel.sh"
