@@ -48,8 +48,8 @@ if ! command -v ansible &> /dev/null; then
 fi
 
 # Check if AWS CLI is configured
-if ! aws sts get-caller-identity --profile likelion-terraform &> /dev/null; then
-    print_error "AWS CLI not configured with 'likelion-terraform' profile"
+if ! aws sts get-caller-identity --profile likelion-terraform-current &> /dev/null; then
+    print_error "AWS CLI not configured with 'likelion-terraform-current' profile"
     exit 1
 fi
 

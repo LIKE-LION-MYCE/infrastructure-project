@@ -19,38 +19,49 @@
     mode: '0700'
   become: yes
 
-- name: Generate SSH key for database tunnel (restricted)
-  openssh_keypair:
-    path: /home/dbtunnel/.ssh/db_tunnel_key
-    type: rsa
-    size: 2048
-    owner: dbtunnel
-    group: dbtunnel
-    mode: '0600'
-  become: yes
+# COMMENTED OUT: Key generation - using existing keys instead
+# Uncomment these tasks if you need to generate new keys for a different setup
+# - name: Generate SSH key for database tunnel (restricted)
+#   openssh_keypair:
+#     path: /home/dbtunnel/.ssh/db_tunnel_key
+#     type: rsa
+#     size: 2048
+#     owner: dbtunnel
+#     group: dbtunnel
+#     mode: '0600'
+#   become: yes
 
-- name: Create restricted SSH authorized_keys for team members
-  template:
-    src: authorized_keys_tunnel.j2
-    dest: /home/dbtunnel/.ssh/authorized_keys
-    owner: dbtunnel
-    group: dbtunnel
-    mode: '0600'
-  become: yes
+# - name: Create restricted SSH authorized_keys for team members
+#   template:
+#     src: authorized_keys_tunnel.j2
+#     dest: /home/dbtunnel/.ssh/authorized_keys
+#     owner: dbtunnel
+#     group: dbtunnel
+#     mode: '0600'
+#   become: yes
 
-- name: Read generated public key
-  slurp:
-    src: /home/dbtunnel/.ssh/db_tunnel_key.pub
-  register: dbtunnel_pubkey
-  become: yes
+# - name: Read generated public key
+#   slurp:
+#     src: /home/dbtunnel/.ssh/db_tunnel_key.pub
+#   register: dbtunnel_pubkey
+#   become: yes
 
-- name: Add generated public key to authorized_keys with restrictions
-  lineinfile:
-    path: /home/dbtunnel/.ssh/authorized_keys
-    line: 'command="echo ''DB tunnel only''",no-agent-forwarding,no-X11-forwarding,no-pty {{ dbtunnel_pubkey.content | b64decode | trim }} dbtunnel@generated'
-    owner: dbtunnel
-    group: dbtunnel
-    mode: '0600'
+# - name: Add generated public key to authorized_keys with restrictions
+#   lineinfile:
+#     path: /home/dbtunnel/.ssh/authorized_keys
+#     line: 'command="echo ''DB tunnel only''",no-agent-forwarding,no-X11-forwarding,no-pty {{ dbtunnel_pubkey.content | b64decode | trim }} dbtunnel@generated'
+#     owner: dbtunnel
+#     group: dbtunnel
+#     mode: '0600'
+#   become: yes
+
+# USING EXISTING KEYS: Add existing public key with tunnel-only restrictions
+- name: Add existing public key to authorized_keys with tunnel restrictions
+  authorized_key:
+    user: dbtunnel
+    key: "{{ lookup('file', '~/.ssh/aws/db_tunnel_key.pub') }}"
+    key_options: 'command="echo DB tunnel only",no-agent-forwarding,no-X11-forwarding,no-pty'
+    comment: 'dbtunnel@reused'
   become: yes
 
 - name: Create SSH tunnel script for RDS access

@@ -1,7 +1,7 @@
 # 🗄️ Database Connection Guide
 
 ## 📋 Connection Information
-- **RDS Endpoint:** `likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com:3306`  
+- **RDS Endpoint:** `likelion-terraform-dev-mysql.cxcmcckkm366.ap-northeast-2.rds.amazonaws.com:3306`  
 - **Database:** `myce_database`
 - **Username:** `admin`
 - **Password:** `[See terraform.tfvars or ask team lead]`
@@ -15,7 +15,7 @@
 /home/ubuntu/scripts/create_tunnel.sh
 
 # Or manually:
-ssh -L 3307:likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com:3306:3306 ubuntu@43.203.98.133 -i ~/.ssh/aws/likelion-terraform-key
+ssh -L 3307:likelion-terraform-dev-mysql.cxcmcckkm366.ap-northeast-2.rds.amazonaws.com:3306:3306 ubuntu@15.164.128.42 -i ~/.ssh/aws/likelion-terraform-key
 ```
 
 ### 2. Connect to Database
@@ -26,7 +26,7 @@ mysql -h localhost -P 3307 -u admin -p myce_database
 
 ### 3. Close Tunnel
 ```bash
-pkill -f 'ssh.*3307:likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com:3306'
+pkill -f 'ssh.*3307:likelion-terraform-dev-mysql.cxcmcckkm366.ap-northeast-2.rds.amazonaws.com:3306'
 ```
 
 ## 🛠️ Database Management
@@ -40,9 +40,9 @@ FLUSH PRIVILEGES;
 
 ### Connection String for Applications
 ```
-mysql://admin:[PASSWORD]@likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com:3306:3306/myce_database
+mysql://admin:[PASSWORD]@likelion-terraform-dev-mysql.cxcmcckkm366.ap-northeast-2.rds.amazonaws.com:3306:3306/myce_database
 # Replace [PASSWORD] with actual credentials from secure storage
 ```
 
 ---
-*Auto-generated on Thu Jul 31 22:47:12 KST 2025*
+*Auto-generated on Sun Aug  3 17:06:06 KST 2025*

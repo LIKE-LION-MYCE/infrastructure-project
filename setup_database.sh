@@ -18,7 +18,7 @@ ANSIBLE_DIR="$SCRIPT_DIR/ansible"
 RDS_ENDPOINT="likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com"
 EC2_IP="43.203.98.133"
 TUNNEL_PORT="3307"
-DB_TUNNEL_KEY=~/.ssh/myce_dbtunnel_key
+DB_TUNNEL_KEY=~/.ssh/aws/db_tunnel_key
 
 # Function to print colored output
 print_status() {

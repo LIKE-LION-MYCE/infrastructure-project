@@ -1,14 +1,14 @@
-# Auto-generated from Terraform outputs - Thu Jul 31 22:47:12 KST 2025
+# Auto-generated from Terraform outputs - Sun Aug  3 17:06:06 KST 2025
 ---
 # EC2 Configuration
-ec2_public_ip: "43.203.98.133"
+ec2_public_ip: "15.164.128.42"
 
 # RDS Configuration  
-rds_endpoint: "likelion-terraform-dev-mysql.cb06282489sk.ap-northeast-2.rds.amazonaws.com"
+rds_endpoint: "likelion-terraform-dev-mysql.cxcmcckkm366.ap-northeast-2.rds.amazonaws.com"
 rds_port: 3306
 rds_database: "myce_database"
 rds_username: "admin"
 rds_password: "myceforever"
 
 # SSH Configuration
-ssh_command: "ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@43.203.98.133"
+ssh_command: "ssh -i ~/.ssh/aws/likelion-terraform-key ubuntu@15.164.128.42"

@@ -75,3 +75,33 @@ variable "skip_final_snapshot" {
   type        = bool
   default     = true
 }
+
+# Enhanced Monitoring Variables
+variable "monitoring_interval" {
+  description = "Enhanced monitoring interval in seconds (0 = disabled, 1, 5, 10, 15, 30, 60)"
+  type        = number
+  default     = 0
+  
+  validation {
+    condition     = contains([0, 1, 5, 10, 15, 30, 60], var.monitoring_interval)
+    error_message = "Monitoring interval must be one of: 0, 1, 5, 10, 15, 30, 60."
+  }
+}
+
+# Performance Insights Variables
+variable "performance_insights_enabled" {
+  description = "Enable Performance Insights for the RDS instance"
+  type        = bool
+  default     = false
+}
+
+variable "performance_insights_retention_period" {
+  description = "Performance Insights retention period in days (7 or 731 for free tier)"
+  type        = number
+  default     = 7
+  
+  validation {
+    condition     = contains([7, 731], var.performance_insights_retention_period)
+    error_message = "Performance Insights retention period must be 7 or 731 days."
+  }
+}

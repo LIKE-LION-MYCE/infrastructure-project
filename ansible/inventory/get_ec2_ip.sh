@@ -16,15 +16,19 @@ if [ $? -eq 0 ] && [ -n "$EC2_IP" ]; then
     echo "✅ Found DB Name: $DB_NAME"
     cd - > /dev/null
     
-    # Update inventory file
-    sed -i.bak "s/^# Example: .*/# Example: $EC2_IP/" inventory/hosts
-    
-    # Check if IP already exists in inventory
-    if ! grep -q "^$EC2_IP" inventory/hosts; then
-        # Add IP after the comment line
-        sed -i.bak "/^# Example:/a\\
-$EC2_IP" inventory/hosts
-    fi
+    # Completely rewrite the inventory file to avoid concatenation issues
+    cat > inventory/hosts << EOF
+[ec2_servers]
+# Replace with your actual EC2 public IP from terraform output
+# You can get it by running: cd terraform/environments/dev && terraform output public_ip
+# Example: $EC2_IP
+$EC2_IP
+
+[ec2_servers:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/aws/likelion-terraform-key
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+EOF
     
     # Create Ansible variables file with RDS info
     cat > group_vars/all.yml << EOF

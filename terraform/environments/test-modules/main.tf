@@ -11,7 +11,7 @@ terraform {
 
 provider "aws" {
   region  = "ap-northeast-2"
-  profile = "likelion-terraform"
+  profile = "likelion-terraform-current"
 }
 
 # VPC Module

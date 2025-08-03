@@ -11,7 +11,7 @@ terraform {
 
 provider "aws" {
   region  = "ap-northeast-2"
-  profile = "likelion-terraform"
+  profile = "likelion-terraform-current"
 }
 
 # VPC Module
@@ -54,6 +54,11 @@ module "rds" {
   vpc_id                = module.vpc.vpc_id
   private_subnet_ids    = module.vpc.private_subnet_ids
   ec2_security_group_id = module.ec2.security_group_id
+  
+  # Enhanced Monitoring & Performance Insights (optional - set to enable)
+  monitoring_interval                    = 60  # Enable Enhanced Monitoring every 60 seconds
+  performance_insights_enabled = false # Enable Performance Insights
+  performance_insights_retention_period = 7    # Free tier: 7 days retention
 }
 
 # Variable for DB password

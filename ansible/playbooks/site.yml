@@ -76,10 +76,10 @@
 
   post_tasks:
     - name: Load RDS variables from group_vars
-      include_vars: group_vars/all.yml
+      include_vars: ansible/group_vars/all.yml
 
     - name: Set up SSH tunnel for RDS access
-      include_tasks: roles/system_config/tasks/ssh_tunnel.yml
+      include_tasks: ansible/roles/system_config/tasks/ssh_tunnel.yml
 
     - name: Display server information
       debug:
