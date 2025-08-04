@@ -368,6 +368,76 @@ ansible-playbook playbooks/site.yml --tags "monitoring" -e "enable_monitoring=tr
 3. 보안 모범 사례 준수
 4. 의미 있는 커밋 메시지 사용
 
+## 🌐 프론트엔드 CDN 인프라
+
+이 프로젝트에는 S3와 CloudFront를 사용한 정적 웹사이트 호스팅 및 미디어 배포를 위한 별도의 프론트엔드 인프라가 포함되어 있습니다.
+
+### 추가된 구성 요소:
+
+**새로운 Terraform 모듈:**
+- `terraform/modules/s3/` - 프론트엔드 자산 및 미디어 저장을 위한 S3 버킷
+- `terraform/modules/cloudfront/` - CloudFront CDN 배포판
+
+**새로운 환경:**
+- `terraform/environments/frontend/` - 완전한 S3 + CloudFront 구성
+
+### 주요 기능:
+
+- **프론트엔드 버킷**: 정적 웹사이트 호스팅용 퍼블릭 S3 버킷 (React/Vue/Angular 앱)
+- **미디어 버킷**: 서명된 URL로 안전한 미디어 저장을 위한 프라이빗 S3 버킷
+- **CloudFront CDN**: 캐싱 최적화를 통한 글로벌 콘텐츠 배포
+- **보안**: 안전한 S3 접근을 위한 Origin Access Control (OAC)
+- **SPA 지원**: 단일 페이지 애플리케이션을 위한 사용자 정의 오류 처리
+
+### 배포 방법:
+
+```bash
+# 프론트엔드 환경으로 이동
+cd terraform/environments/frontend
+
+# 변수 파일 복사 및 구성
+cp terraform.tfvars.example terraform.tfvars
+
+# 초기화 및 배포
+terraform init
+terraform plan
+terraform apply
+```
+
+### 설정:
+
+`terraform/environments/frontend/terraform.tfvars` 편집:
+```hcl
+aws_region = "ap-northeast-2"
+aws_profile = "likelion-terraform-current"
+project_prefix = "myce"
+environment = "frontend"
+```
+
+### 배포 결과:
+
+배포 완료 후 다음을 얻을 수 있습니다:
+- **프론트엔드 URL**: `https://xyz.cloudfront.net` - 웹 애플리케이션 호스팅용
+- **미디어 URL**: `https://abc.cloudfront.net` - 미디어 파일 서빙용
+- **S3 버킷 이름**: AWS CLI 또는 SDK를 통한 콘텐츠 업로드용
+
+### 사용 예시:
+
+**프론트엔드 파일 업로드:**
+```bash
+aws s3 sync ./build/ s3://myce-frontend-bucket --profile likelion-terraform-current
+```
+
+**미디어 파일 업로드:**
+```bash
+aws s3 cp ./image.jpg s3://myce-media-bucket/images/ --profile likelion-terraform-current
+```
+
+**CloudFront 캐시 무효화:**
+```bash
+aws cloudfront create-invalidation --distribution-id DISTRIBUTION_ID --paths "/*" --profile likelion-terraform-current
+```
+
 ## 📞 지원
 
 문제 및 질문은:

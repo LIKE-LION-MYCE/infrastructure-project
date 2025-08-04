@@ -1,0 +1,11 @@
+# Example terraform.tfvars file for Frontend Environment
+# Copy this to terraform.tfvars and set your actual values
+# terraform.tfvars is gitignored for security
+
+# AWS Configuration
+aws_region = "ap-northeast-2"
+aws_profile = "likelion-terraform-current"
+
+# Project Configuration
+project_prefix = "myce"
+environment = "frontend"
