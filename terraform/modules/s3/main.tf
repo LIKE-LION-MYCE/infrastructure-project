@@ -121,6 +121,26 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   }
 }
 
+# Media Bucket CORS Configuration for Direct Frontend Access
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD", "PUT", "POST", "DELETE"]
+    allowed_origins = [
+      "https://www.myce.live",
+      "https://myce.live",
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:8081"
+    ]
+    expose_headers  = ["ETag", "Content-Length", "x-amz-request-id"]
+    max_age_seconds = 3600
+  }
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "media" {
   bucket = aws_s3_bucket.media.id
 
