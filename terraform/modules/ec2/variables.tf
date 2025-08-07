@@ -50,3 +50,9 @@ variable "ssh_cidr_blocks" {
   type        = list(string)
   default     = ["0.0.0.0/0"]
 }
+
+variable "iam_instance_profile" {
+  description = "IAM instance profile name for EC2"
+  type        = string
+  default     = null
+}

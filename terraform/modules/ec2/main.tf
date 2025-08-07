@@ -46,6 +46,13 @@ resource "aws_security_group" "main" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -66,6 +73,7 @@ resource "aws_instance" "main" {
   key_name                    = var.key_name
   associate_public_ip_address = var.associate_public_ip_address
   vpc_security_group_ids      = [aws_security_group.main.id]
+  iam_instance_profile        = var.iam_instance_profile
 
   root_block_device {
     volume_size = var.root_volume_size

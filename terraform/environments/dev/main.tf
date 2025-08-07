@@ -29,12 +29,13 @@ module "vpc" {
 module "ec2" {
   source = "../../modules/ec2"
 
-  project_name    = "likelion-terraform-dev"
-  instance_type   = "t3.micro"
-  key_name        = "likelion-terraform-key"
-  vpc_id          = module.vpc.vpc_id
-  subnet_id       = module.vpc.public_subnet_id
-  root_volume_size = 16
+  project_name         = "likelion-terraform-dev"
+  instance_type        = "t3.micro"
+  key_name             = "likelion-terraform-key"
+  vpc_id               = module.vpc.vpc_id
+  subnet_id            = module.vpc.public_subnet_id
+  root_volume_size     = 16
+  iam_instance_profile = module.iam.instance_profile_name
 }
 
 # EIP Module
@@ -59,6 +60,15 @@ module "rds" {
   monitoring_interval                    = 60  # Enable Enhanced Monitoring every 60 seconds
   performance_insights_enabled = false # Enable Performance Insights
   performance_insights_retention_period = 7    # Free tier: 7 days retention
+}
+
+# IAM Module for EC2 SSM access
+module "iam" {
+  source = "../../modules/iam"
+
+  project_name      = "likelion-terraform-dev"
+  environment       = "dev"
+  enable_cloudwatch = false
 }
 
 # Variable for DB password
@@ -99,4 +109,12 @@ output "db_endpoint" {
 
 output "db_name" {
   value = module.rds.db_name
+}
+
+output "iam_role_name" {
+  value = module.iam.iam_role_name
+}
+
+output "instance_profile_name" {
+  value = module.iam.instance_profile_name
 }

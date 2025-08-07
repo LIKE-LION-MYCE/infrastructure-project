@@ -1,0 +1,22 @@
+# Example Terraform variables for SSM Parameters
+# Copy this file to terraform.tfvars and fill in your actual values
+# terraform.tfvars is gitignored for security
+
+# Database Configuration
+db_password = "your-mysql-database-password-here"
+
+# MongoDB Configuration  
+mongodb_password = "your-mongodb-atlas-password-here"
+
+# Redis Configuration
+redis_password = "your-upstash-redis-password-here"
+
+# JWT Configuration
+jwt_secret = "your-super-secret-jwt-signing-key-minimum-32-characters"
+
+# AWS Configuration
+aws_access_key_id     = "AKIA..."
+aws_secret_access_key = "your-aws-secret-access-key-here"
+
+# Note: Non-sensitive values like hostnames and bucket names 
+# use defaults from variables.tf and don't need to be set here

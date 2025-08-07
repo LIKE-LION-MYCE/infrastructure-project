@@ -1,0 +1,84 @@
+---
+# AWS CLI v2 Installation
+# This installs the latest AWS CLI v2 for accessing SSM parameters and other AWS services
+
+- name: Check if AWS CLI v2 is already installed
+  command: aws --version
+  register: aws_cli_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Install required packages for AWS CLI
+  apt:
+    name:
+      - unzip
+      - curl
+    state: present
+    update_cache: true
+  become: true
+  when: aws_cli_check.rc != 0
+
+- name: Download AWS CLI v2
+  get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    dest: "/tmp/awscliv2.zip"
+    mode: '0644'
+  when: aws_cli_check.rc != 0
+
+- name: Create temporary directory for AWS CLI
+  file:
+    path: "/tmp/aws-cli-install"
+    state: directory
+    mode: '0755'
+  when: aws_cli_check.rc != 0
+
+- name: Extract AWS CLI v2
+  unarchive:
+    src: "/tmp/awscliv2.zip"
+    dest: "/tmp/aws-cli-install"
+    remote_src: true
+  when: aws_cli_check.rc != 0
+
+- name: Install AWS CLI v2
+  command: /tmp/aws-cli-install/aws/install
+  become: true
+  when: aws_cli_check.rc != 0
+
+- name: Clean up installation files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/awscliv2.zip"
+    - "/tmp/aws-cli-install"
+  when: aws_cli_check.rc != 0
+
+- name: Verify AWS CLI installation
+  command: aws --version
+  register: aws_cli_version
+  changed_when: false
+
+- name: Display AWS CLI version
+  debug:
+    msg: "AWS CLI installed: {{ aws_cli_version.stdout }}"
+
+- name: Install Docker (for backend deployments)
+  apt:
+    name: docker.io
+    state: present
+    update_cache: true
+  become: true
+
+- name: Add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: true
+  become: true
+
+- name: Enable and start Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: true
+  become: true

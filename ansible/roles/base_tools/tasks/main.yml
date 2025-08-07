@@ -41,3 +41,6 @@
 
 - name: Configure vim
   include_tasks: vim.yml
+
+- name: Install AWS CLI and Docker
+  include_tasks: aws-cli.yml
