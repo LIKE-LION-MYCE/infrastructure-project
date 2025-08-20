@@ -31,3 +31,9 @@ variable "subnet_ids" {
   type        = list(string)
   default     = null
 }
+
+variable "enable_monitoring" {
+  description = "Enable monitoring infrastructure (Grafana target groups and routing)"
+  type        = bool
+  default     = false
+}

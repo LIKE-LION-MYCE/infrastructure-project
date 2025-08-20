@@ -1,0 +1,129 @@
+# Option B1: Path-based routing (like jobdams.online/dashboard)
+# This replicates your nginx location /dashboard/ setup
+
+# Grafana Target Group
+resource "aws_lb_target_group" "grafana_public" {
+  name     = "myce-grafana-public-tg"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/api/health"
+    matcher             = "200"
+  }
+
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400  # 1 day sticky sessions
+    enabled         = true
+  }
+
+  tags = {
+    Name = "myce-grafana-public-tg"
+    Type = "monitoring"
+  }
+}
+
+# Attach EC2 to Grafana target group
+resource "aws_lb_target_group_attachment" "grafana_public" {
+  target_group_arn = aws_lb_target_group.grafana_public.arn
+  target_id        = var.ec2_instance_id
+  port             = 3000
+}
+
+# ALB Listener Rule for /dashboard/* path (like your nginx setup)
+resource "aws_lb_listener_rule" "grafana_dashboard_path" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 90  # High priority for monitoring
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana_public.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/*", "/dashboard"]
+    }
+  }
+}
+
+# Shortcut redirects (like your nginx dashboard/ec2 and dashboard/jobdam)
+resource "aws_lb_listener_rule" "dashboard_ec2_shortcut" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 91
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/rYdddlPWk/node-exporter-full"
+      query       = "orgId=1&from=now-24h&to=now"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/ec2"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "dashboard_app_shortcut" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 92
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/spring-boot-myce/myce-spring-boot-application"
+      query       = "from=now-1h&to=now"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/app", "/dashboard/myce"]
+    }
+  }
+}
+
+# Optional: Prometheus internal access (not public)
+resource "aws_lb_target_group" "prometheus_internal" {
+  name     = "myce-prometheus-internal-tg"
+  port     = 9090
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/-/healthy"
+    matcher             = "200"
+  }
+
+  tags = {
+    Name = "myce-prometheus-internal-tg"
+    Type = "monitoring-internal"
+  }
+}
+
+# Output URLs for reference
+output "grafana_urls" {
+  value = {
+    main_dashboard = "https://api.myce.live/dashboard/"
+    ec2_metrics    = "https://api.myce.live/dashboard/ec2"
+    app_metrics    = "https://api.myce.live/dashboard/app"
+  }
+  description = "Public monitoring URLs (like jobdams.online setup)"
+}

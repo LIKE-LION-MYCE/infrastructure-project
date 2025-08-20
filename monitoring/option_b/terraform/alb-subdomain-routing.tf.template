@@ -1,0 +1,94 @@
+# Option B2: Subdomain-based routing (monitoring.myce.live)
+# Alternative approach using dedicated monitoring subdomain
+
+# Grafana Target Group
+resource "aws_lb_target_group" "grafana_subdomain" {
+  name     = "myce-grafana-subdomain-tg"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/api/health"
+    matcher             = "200"
+  }
+
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400
+    enabled         = true
+  }
+
+  tags = {
+    Name = "myce-grafana-subdomain-tg"
+    Type = "monitoring"
+  }
+}
+
+# Attach EC2 to target group
+resource "aws_lb_target_group_attachment" "grafana_subdomain" {
+  target_group_arn = aws_lb_target_group.grafana_subdomain.arn
+  target_id        = var.ec2_instance_id
+  port             = 3000
+}
+
+# ALB Listener Rule for monitoring subdomain
+resource "aws_lb_listener_rule" "grafana_monitoring_subdomain" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 90
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana_subdomain.arn
+  }
+
+  condition {
+    host_header {
+      values = ["monitoring.myce.live", "grafana.myce.live"]
+    }
+  }
+}
+
+# Route 53 Records for monitoring subdomain
+resource "aws_route53_record" "monitoring_subdomain" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "monitoring.myce.live"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "grafana_subdomain" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = "grafana.myce.live"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Data source for Route53 zone
+data "aws_route53_zone" "main" {
+  name = "myce.live"
+}
+
+# Output URLs
+output "grafana_subdomain_urls" {
+  value = {
+    primary     = "https://monitoring.myce.live/"
+    alternative = "https://grafana.myce.live/"
+  }
+  description = "Subdomain monitoring URLs"
+}

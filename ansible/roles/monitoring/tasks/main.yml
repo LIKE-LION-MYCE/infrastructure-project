@@ -1,5 +1,5 @@
 ---
-# Monitoring setup: Prometheus + node_exporter + Grafana
+# Monitoring setup: Prometheus + node_exporter + Grafana + k6
 
 - name: Install node_exporter
   include_tasks: node_exporter.yml
@@ -9,3 +9,7 @@
 
 - name: Install and configure Grafana
   include_tasks: grafana.yml
+
+- name: Install and configure k6 Load Generator
+  include_tasks: k6.yml
+  when: install_k6 | default(false)

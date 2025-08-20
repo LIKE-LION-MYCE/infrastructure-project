@@ -122,6 +122,20 @@
   become: yes
   notify: restart grafana
 
+- name: Copy dashboard files to server
+  copy:
+    src: "{{ item.src }}"
+    dest: "/home/ubuntu/apps/monitoring/grafana/dashboards/{{ item.name }}"
+    owner: grafana
+    group: grafana
+    mode: '644'
+  loop:
+    - { src: "spring-boot-dashboard.json", name: "spring-boot-dashboard.json" }
+    - { src: "demo-dashboard.json", name: "demo-dashboard.json" }
+  become: yes
+  when: item.src is file
+  ignore_errors: yes
+
 - name: Create basic Node Exporter dashboard in organized structure
   copy:
     dest: /home/ubuntu/apps/monitoring/grafana/dashboards/node-exporter.json

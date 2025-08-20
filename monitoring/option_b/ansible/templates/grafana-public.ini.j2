@@ -1,0 +1,103 @@
+# Grafana configuration for public access (Option B)
+# Based on your jobdams.online setup
+
+[DEFAULT]
+instance_name = myce-grafana-public
+
+[server]
+protocol = http
+http_addr = 0.0.0.0
+http_port = 3000
+domain = {{ ansible_default_ipv4.address }}
+root_url = {{ grafana_root_url }}
+serve_from_sub_path = true
+
+[database]
+type = sqlite3
+path = /opt/monitoring/grafana/grafana.db
+
+[security]
+admin_user = admin
+admin_password = grafana123
+secret_key = MYCE2025MonitoringSecretKey
+disable_gravatar = true
+# Allow iframe embedding for dashboard sharing
+allow_embedding = true
+
+[users]
+# Allow sign up
+allow_sign_up = true
+allow_org_create = false
+auto_assign_org = true
+auto_assign_org_role = Viewer
+# Disable user deletion
+disable_user_delete = true
+
+[auth]
+# OAuth will be configured here if needed
+
+[auth.anonymous]
+# Enable anonymous access for public dashboards
+enabled = true
+org_name = Public MYCE Monitoring
+org_role = Viewer
+hide_version = false
+
+[auth.basic]
+enabled = true
+
+[auth.proxy]
+enabled = false
+
+[snapshots]
+# Allow public snapshots
+external_enabled = true
+external_snapshot_url = https://snapshots.raintank.io
+external_snapshot_name = Publish to snapshot.raintank.io
+
+[dashboards]
+# Dashboard versions to keep
+versions_to_keep = 20
+default_home_dashboard_path = /home/ubuntu/apps/monitoring/grafana/dashboards/spring-boot-dashboard.json
+
+[explore]
+enabled = true
+
+[log]
+mode = console file
+level = info
+file = /var/log/grafana/grafana.log
+
+[log.console]
+level = info
+format = console
+
+[paths]
+data = /opt/monitoring/grafana
+logs = /var/log/grafana
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning
+
+# Alerting (if needed)
+[alerting]
+enabled = true
+execute_alerts = true
+
+[smtp]
+enabled = false
+
+# Security headers for public access
+[security]
+strict_transport_security = true
+strict_transport_security_max_age_seconds = 86400
+content_type_protection_header = true
+x_content_type_options = nosniff
+x_xss_protection = true
+
+# Performance settings
+[caching]
+enabled = true
+
+# Feature toggles
+[feature_toggles]
+enable = publicDashboards

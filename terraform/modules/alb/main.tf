@@ -97,7 +97,7 @@ resource "aws_lb_target_group" "backend" {
     unhealthy_threshold = 2
     timeout             = 5
     interval            = 30
-    path                = "/actuator/health"
+    path                = "/actuator/health/liveness"
     matcher             = "200"
     port                = "traffic-port"
     protocol            = "HTTP"
@@ -169,4 +169,194 @@ resource "aws_security_group_rule" "allow_alb_to_ec2" {
   security_group_id        = var.ec2_security_group_id
   source_security_group_id = aws_security_group.alb.id
   description              = "Allow ALB to reach backend on port 8080"
+}
+
+# Allow ALB to reach Grafana monitoring port
+resource "aws_security_group_rule" "allow_alb_to_grafana" {
+  type                     = "ingress"
+  from_port                = 3000
+  to_port                  = 3000
+  protocol                 = "tcp"
+  security_group_id        = var.ec2_security_group_id
+  source_security_group_id = aws_security_group.alb.id
+  description              = "Allow ALB to reach Grafana on port 3000"
+}
+
+# ============================================================================
+# MONITORING CONFIGURATION (Option B: Public Access like jobdams.online)
+# ============================================================================
+
+# Grafana Target Group (like jobdams.online/dashboard/)
+resource "aws_lb_target_group" "grafana" {
+  count    = var.enable_monitoring ? 1 : 0
+  name     = "${var.project_name}-grafana-tg"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.main.id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/api/health"
+    matcher             = "200"
+  }
+
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400  # 1 day sticky sessions for Grafana
+    enabled         = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-grafana-tg"
+    Project     = var.project_name
+    Environment = var.environment
+    Type        = "monitoring"
+  }
+}
+
+# Attach EC2 to Grafana target group
+resource "aws_lb_target_group_attachment" "grafana" {
+  count            = var.enable_monitoring ? 1 : 0
+  target_group_arn = aws_lb_target_group.grafana[0].arn
+  target_id        = var.ec2_instance_id
+  port             = 3000
+}
+
+# ALB Listener Rule for /dashboard/* path (like jobdams.online setup)
+resource "aws_lb_listener_rule" "grafana_dashboard" {
+  count        = var.enable_monitoring ? 1 : 0
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 90  # High priority for monitoring
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/*", "/dashboard"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-grafana-dashboard-rule"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# Dashboard shortcuts (like jobdams.online/dashboard/ec2)
+resource "aws_lb_listener_rule" "dashboard_ec2_shortcut" {
+  count        = var.enable_monitoring ? 1 : 0
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 91
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/rYdddlPWk/node-exporter-full"
+      query       = "orgId=1&from=now-24h&to=now"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/ec2"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-dashboard-ec2-shortcut"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_lb_listener_rule" "dashboard_app_shortcut" {
+  count        = var.enable_monitoring ? 1 : 0
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 92
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/spring-boot-myce/myce-spring-boot-application"
+      query       = "from=now-1h&to=now"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/app", "/dashboard/myce"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-dashboard-app-shortcut"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# k6 Load Testing Performance Dashboard (kiosk mode)
+resource "aws_lb_listener_rule" "dashboard_performance_shortcut" {
+  count        = var.enable_monitoring ? 1 : 0
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 93
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/ccbb2351-2ae2-462f-ae0e-f2c893ad1028/k6-prometheus"
+      query       = "orgId=1&from=now-5m&to=now&kiosk"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/performance"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-dashboard-performance-shortcut"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# Combined Demo Dashboard (kiosk mode) - will be created next
+resource "aws_lb_listener_rule" "dashboard_demo_shortcut" {
+  count        = var.enable_monitoring ? 1 : 0
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 94
+
+  action {
+    type = "redirect"
+    redirect {
+      path        = "/dashboard/d/demo-combined-v2/myce-demo-dashboard"
+      query       = "orgId=1&from=now-15m&to=now&kiosk&refresh=5s"
+      status_code = "HTTP_302"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/dashboard/demo"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-dashboard-demo-shortcut"
+    Project     = var.project_name
+    Environment = var.environment
+  }
 }

@@ -1,0 +1,40 @@
+---
+# Load Testing Setup Playbook
+# Installs k6 on the load generator EC2 instance
+
+- name: Setup k6 Load Generator
+  hosts: loadgen
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    # Enable k6 installation in monitoring role
+    install_k6: true
+    # k6 server IP for Prometheus scraping (will be set to inventory hostname)
+    k6_server_ip: "{{ ansible_default_ipv4.address }}"
+    
+  roles:
+    - role: ../../ansible/roles/monitoring
+      tags: 
+        - monitoring
+        - k6
+        
+  post_tasks:
+    - name: Display setup completion message
+      debug:
+        msg:
+          - "🎉 k6 Load Generator Setup Complete!"
+          - ""
+          - "📍 Server: {{ inventory_hostname }} ({{ ansible_default_ipv4.address }})"
+          - "🔧 SSH Command: ssh -i ~/.ssh/{{ ansible_ssh_private_key_file | default('likelion-terraform-key') }}.pem ubuntu@{{ inventory_hostname }}"
+          - ""
+          - "🚀 Quick Start Commands:"
+          - "   k6-run smoke-test.js    # Light test (1 user, 30s)"
+          - "   k6-run load-test.js     # Load test (ramp 100→200 users)"
+          - "   k6-run stress-test.js   # Stress test (spike to 1000 users)"
+          - ""
+          - "📊 Prometheus Metrics: http://{{ ansible_default_ipv4.address }}:5656/metrics"
+          - "📈 Grafana Dashboard: https://api.myce.live/dashboard/"
+          - ""
+          - "📁 Test Scripts Location: /opt/k6/scripts/"
+          - "📝 Logs Location: /opt/k6/logs/"
